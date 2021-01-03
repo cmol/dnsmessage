@@ -1,22 +1,22 @@
-require_relative 'lib/dnsrb/version'
+require_relative 'lib/dnsmessage/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "dnsrb"
-  spec.version       = Dnsrb::VERSION
+  spec.name          = "dnsmessage"
+  spec.version       = DNSMessage::VERSION
   spec.authors       = ["Claus Lensbøl"]
   spec.email         = ["cmol@cmol.dk"]
 
-  spec.summary       = %q{Ruby library to write custom DNS servers}
-  spec.description   = %q{Ruby library to write custom DNS servers}
-  spec.homepage      = "https://github.com/cmol/dnsrb"
+  spec.summary       = %q{Ruby library to write and parse DNS messages}
+  spec.description   = %q{Ruby library that will let you parse and write all details of DNS messages}
+  spec.homepage      = "https://github.com/cmol/dnsmessage"
   spec.license       = "MIT"
   spec.required_ruby_version = Gem::Requirement.new(">= 2.3.0")
 
   spec.metadata["allowed_push_host"] = "TODO: Set to 'http://mygemserver.com'"
 
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://github.com/cmol/dnsrb"
-  spec.metadata["changelog_uri"] = "https://github.com/cmol/dnsrb"
+  spec.metadata["source_code_uri"] = "https://github.com/cmol/dnsmessage"
+  spec.metadata["changelog_uri"] = "https://github.com/cmol/dnsmessage"
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
