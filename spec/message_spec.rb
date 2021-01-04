@@ -12,7 +12,7 @@ RSpec.describe DNSMessage::Message do
   it "will parse DNS query header" do
     q = DNSMessage::Message.new()
     q.parse_header(good_query[0...12])
-    expect(q).to have_attributes(:qr => 0,
+    expect(q).to have_attributes(qr: DNSMessage::Message::QUERY,
                                  rd: 1,
                                  qdcount: 1,
                                  ancount: 0,
@@ -22,10 +22,13 @@ RSpec.describe DNSMessage::Message do
 
   it "will parse DNS query" do
     q = DNSMessage::Message.parse(good_query)
-    expect(q).to have_attributes(domain_name: "cmol.dk",
-                                 query_type: DNSMessage::Type::A,
+    expect(q).to have_attributes(qr: DNSMessage::Message::QUERY,
                                  qdcount: 1,
-                                 arcount: 1)
+                                 arcount: 1,
+                                 questions: [["cmol.dk",
+                                     DNSMessage::Type::A,
+                                     DNSMessage::Class::IN]]
+                                )
   end
 
   it "will fail on too short query" do
@@ -57,5 +60,29 @@ RSpec.describe DNSMessage::Message do
     expect(name).to eq("cmol.dk")
   end
 
-  it "will parse DNS reply"
+  it "will parse DNS record" do
+    q = DNSMessage::Message.new()
+    expect(q.parse_records(good_reply, 1, 25)).to \
+      eq([[["cmol.dk",
+           DNSMessage::Type::A,
+           DNSMessage::Class::IN,
+           7200,
+           "\x5d\x5a\x72\x37"]],41])
+  end
+
+  it "will parse DNS reply" do
+    q = DNSMessage::Message.parse(good_reply)
+    expect(q).to have_attributes(qr: DNSMessage::Message::REPLY,
+                                 qdcount: 1,
+                                 arcount: 1,
+                                 questions: [["cmol.dk",
+                                     DNSMessage::Type::A,
+                                     DNSMessage::Class::IN]],
+                                 answers: [["cmol.dk",
+                                     DNSMessage::Type::A,
+                                     DNSMessage::Class::IN,
+                                     7200,
+                                     "\x5d\x5a\x72\x37"]]
+                                )
+  end
 end

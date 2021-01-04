@@ -3,9 +3,10 @@ module DNSMessage
 
     NAME_POINTER = 0xc0
     POINTER_MASK = 0x3fff
+    QUERY        = 0
+    REPLY        = 1
 
-    attr_accessor :domain_name, :query_type, :questions,
-      :answers, :authority, :additionals
+    attr_accessor :questions, :answers, :authority, :additionals
     attr_reader :id, :qr, :opcode, :aa, :tc, :rd, :ra, :z, :rcode,
       :qdcount, :ancount, :nscount, :arcount
 
@@ -18,9 +19,9 @@ module DNSMessage
     def parse(input)
       parse_header(input)
       idx = parse_questions(input, @qdcount)
-      idx = parse_records(input, @ancount, idx)
-      idx = parse_records(input, @nscount, idx)
-      idx = parse_records(input, @arcount, idx)
+      @answers, idx     = parse_records(input, @ancount, idx)
+      @authority, idx   = parse_records(input, @nscount, idx)
+      @additionals, idx = parse_records(input, @arcount, idx)
     end
 
     def self.parse(input)
@@ -51,7 +52,7 @@ module DNSMessage
         idx += 1
         if length & NAME_POINTER == NAME_POINTER
           ptr = ((length << 8) | message[idx].unpack("c").first) & POINTER_MASK
-          return parse_name(message, ptr)
+          return [parse_name(message, ptr).first,idx+1]
         elsif length == 0
           break
         else
@@ -69,17 +70,23 @@ module DNSMessage
 
         # take last four bytes
         type, klass = message[idx..-1].unpack("n2")
+        idx += 4
         [name, type, klass]
       end
-
-      @domain_name = @questions.first[0]
-      @query_type  = @questions.first[1]
 
       idx
     end
 
     def parse_records(message, num_records, idx)
-
+      [num_records.times.map do
+        name, idx = parse_name(message, idx)
+        type, klass, ttl, rdata_length = message[idx...idx+10].unpack("nnNn")
+        idx += 10
+        rdata = message[idx...idx+rdata_length]
+        idx += rdata_length
+        [name, type, klass, ttl, rdata]
+      end,
+      idx]
     end
 
     def check_validity
