@@ -85,4 +85,9 @@ RSpec.describe DNSMessage::Message do
                                      "\x5d\x5a\x72\x37"]]
                                 )
   end
+
+  it "will build reply correctly" do
+    r = DNSMessage::Message::parse(good_reply).build
+    expect(r.bytes).to eq(good_reply.bytes)
+  end
 end

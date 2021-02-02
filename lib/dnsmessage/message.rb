@@ -5,6 +5,7 @@ module DNSMessage
     POINTER_MASK = 0x3fff
     QUERY        = 0
     REPLY        = 1
+    HEADER_SIZE  = 12
 
     attr_accessor :questions, :answers, :authority, :additionals
     attr_reader :id, :qr, :opcode, :aa, :tc, :rd, :ra, :z, :rcode,
@@ -64,7 +65,7 @@ module DNSMessage
     end
 
     def parse_questions(message, num_questions)
-      idx = 12 # Header takes up the first 12 bytes
+      idx = HEADER_SIZE # Header takes up the first 12 bytes
       @questions = (0...num_questions).map do
         name, idx = parse_name(message, idx)
 
@@ -87,6 +88,64 @@ module DNSMessage
         [name, type, klass, ttl, rdata]
       end,
       idx]
+    end
+
+    def build
+      name_pointers = {}
+      packet  = build_header
+      packet += build_questions(name_pointers, packet.size)
+      packet += build_answers(name_pointers, packet.size)
+      packet += build_authority(name_pointers, packet.size)
+      packet += build_additionals(name_pointers,packet.size)
+    end
+
+    def build_header
+      opts = (@qr     & 0x1) << 15 |
+             (@opcode & 0xf) << 11 |
+             (@aa     & 0x1) << 10 |
+             (@tc     & 0x1) << 9  |
+             (@rd     & 0x1) << 8  |
+             (@ra     & 0x1) << 7  |
+             (@z      & 0x7) << 4  |
+             (@z      & 0xf)
+      [@id, opts, @qdcount, @ancount, @nscount, @arcount].pack("n6")
+    end
+
+    def build_questions(name_pointers, idx)
+      @questions.map do | name, type, klass |
+        name_bytes = build_name(name,name_pointers,idx)
+        name_bytes + [type,klass].pack("n2")
+      end.join("")
+    end
+
+    def build_answers(name_pointers, idx)
+      build_record(name_pointers, idx, @answers)
+    end
+
+    def build_authority(name_pointers, idx)
+      build_record(name_pointers, idx, @authority)
+    end
+
+    def build_additionals(name_pointers, idx)
+      build_record(name_pointers, idx, @additionals)
+    end
+
+    def build_record(name_pointers, idx, records)
+      records.map do |name, type, klass, ttl, rdata|
+        name_bytes = build_name(name,name_pointers,idx)
+        name_bytes + [type, klass, ttl, rdata.length].pack("nnNn") + rdata
+      end.join("")
+    end
+
+    def build_name(name, name_pointers, idx)
+      if name_pointers[name]
+        name_bytes = [(name_pointers[name] | NAME_POINTER << 8)].pack("n")
+      else
+        name_pointers[name] = idx
+        name_bytes = name.split(".").map do | section |
+          section.length.chr + section
+        end.join("") + "\x0" # Terminate will nullptr
+      end
     end
 
     def check_validity
