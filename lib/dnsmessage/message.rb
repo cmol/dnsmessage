@@ -15,6 +15,7 @@ module DNSMessage
       @questions   = []
       @answers     = []
       @additionals = []
+      @authority   = []
     end
 
     def parse(input)
