@@ -93,10 +93,10 @@ module DNSMessage
     def build
       name_pointers = {}
       packet  = build_header
-      packet += build_questions(name_pointers, packet.size)
-      packet += build_answers(name_pointers, packet.size)
-      packet += build_authority(name_pointers, packet.size)
-      packet += build_additionals(name_pointers,packet.size)
+      packet << build_questions(name_pointers, packet.size)
+      packet << build_answers(name_pointers, packet.size)
+      packet << build_authority(name_pointers, packet.size)
+      packet << build_additionals(name_pointers,packet.size)
     end
 
     def build_header
