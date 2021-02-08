@@ -28,11 +28,16 @@ module DNSMessage
     end
 
     def build(name_pointers,idx)
+      return "" unless self.respond_to?("build_#{type_str(@type)}")
       name_bytes, add = DNSMessage::Name.build(@name, name_pointers)
       name_pointers[@name] = idx if add
       data = send("build_#{type_str(@type)}")
       name_bytes + [@type, @klass, @ttl, data.length].pack("nnNn") + data
     end
+
+    ##
+    ## Parsers
+    ##
 
     def parse_A(rdata, length)
       IPAddr.new_ntoh(rdata[0...length])
@@ -40,6 +45,10 @@ module DNSMessage
 
     def parse_OPT(rdata, length)
     end
+
+    ##
+    ## Builders
+    ##
 
     def build_A
       @rdata.hton
