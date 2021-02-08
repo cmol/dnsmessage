@@ -65,15 +65,10 @@ module DNSMessage
 
     def parse_records(message, num_records, idx, name_ptrs)
       [num_records.times.map do
-        name, size, ptr = DNSMessage::Name.parse(message[idx..-1], name_ptrs)
-        name_ptrs[ptr] = name if ptr
-        idx += size
-
-        type, klass, ttl, rdata_length = message[idx...idx+10].unpack("nnNn")
-        idx += 10
-        rdata = message[idx...idx+rdata_length]
-        idx += rdata_length
-        [name, type, klass, ttl, rdata]
+        DNSMessage::ResourceRecord.new(message[idx..-1],name_ptrs).tap do | rr |
+          name_ptrs[idx] = rr.name if rr.add_to_hash?
+          idx += rr.size
+        end
       end,
       idx]
     end
@@ -124,10 +119,10 @@ module DNSMessage
     end
 
     def build_record(name_pointers, idx, records)
-      records.map do |name, type, klass, ttl, rdata|
-        name_bytes, add_to_hash = DNSMessage::Name.build(name,name_pointers)
-        name_pointers[name] = idx if add_to_hash
-        name_bytes + [type, klass, ttl, rdata.length].pack("nnNn") + rdata
+      records.map do | rr |
+        rr.build(name_pointers,idx).tap do | r |
+          idx += r.length
+        end
       end.join("")
     end
 

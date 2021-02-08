@@ -49,14 +49,16 @@ RSpec.describe DNSMessage::Message do
   end
 
   it "will parse DNS record" do
-    q = DNSMessage::Message.new()
+    q  = DNSMessage::Message.new()
     name_ptrs = {0x0c => "cmol.dk"}
-    expect(q.parse_records(good_reply, 1, 25, name_ptrs)).to \
-      eq([[["cmol.dk",
-           DNSMessage::Type::A,
-           DNSMessage::Class::IN,
-           7200,
-           "\x5d\x5a\x72\x37"]],41])
+    expect(q.parse_records(good_reply, 1, 25, name_ptrs)[0][0]).to \
+      have_attributes(
+             name: "cmol.dk",
+             type: 7200,
+             klass: DNSMessage::Class::IN,
+             type: DNSMessage::Type::A,
+             rdata: IPAddr.new("93.90.114.55")
+           )
   end
 
   it "will parse DNS reply" do
@@ -67,11 +69,15 @@ RSpec.describe DNSMessage::Message do
                                  questions: [["cmol.dk",
                                      DNSMessage::Type::A,
                                      DNSMessage::Class::IN]],
-                                 answers: [["cmol.dk",
-                                     DNSMessage::Type::A,
-                                     DNSMessage::Class::IN,
-                                     7200,
-                                     "\x5d\x5a\x72\x37"]]
+                                 answers: match_array([
+                                   have_attributes(
+                                     name: "cmol.dk",
+                                     type: 7200,
+                                     klass: DNSMessage::Class::IN,
+                                     type: DNSMessage::Type::A,
+                                     rdata: IPAddr.new("93.90.114.55")
+                                   )
+                                 ])
                                 )
   end
 

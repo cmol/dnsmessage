@@ -2,28 +2,51 @@ module DNSMessage
   class ResourceRecord
 
     attr_accessor :name, :type, :klass, :ttl, :rdata
+    attr_reader :size, :add_to_hash
 
     #def method_missing(name, *args, &block)
     #  return super(method, *args, &block) unless name.to_s =~ /^[parse|build]_\w+/
     #end
 
     def initialize(record, name_pointers)
-      @name_pointers = name_pointers
-      parse(record)
+      parse(record, name_pointers) if record
     end
 
     def type_str(type)
       Type::TYPE_STRINGS[type]
     end
 
-    def parse(record)
-      @name, idx = DNSMessage::Name.parse(record,@name_pointers)
-      @type, @klass, @ttl, rdata_length = record[idx...idx+10].unpack("nnNn")
-      @rdata = send("parse_#{type_str(@type)}", record[idx+10..-1], rdata_length)
+    def add_to_hash?
+      @add_to_hash
     end
 
-    def parse_A(rdata, _)
-      IPAddr.new_ntoh(rdata)
+    def parse(record, name_pointers)
+      @name, idx, @add_to_hash = DNSMessage::Name.parse(record,name_pointers)
+      @type, @klass, @ttl, rdata_length = record[idx...idx+10].unpack("nnNn")
+      @rdata = send("parse_#{type_str(@type)}", record[idx+10..-1], rdata_length)
+      @size = idx + 10 + rdata_length
+    end
+
+    def build(name_pointers,idx)
+      name_bytes, add = DNSMessage::Name.build(@name, name_pointers)
+      name_pointers[@name] = idx if add
+      data = send("build_#{type_str(@type)}")
+      name_bytes + [@type, @klass, @ttl, data.length].pack("nnNn") + data
+    end
+
+    def parse_A(rdata, length)
+      IPAddr.new_ntoh(rdata[0...length])
+    end
+
+    def parse_OPT(rdata, length)
+    end
+
+    def build_A
+      @rdata.hton
+    end
+
+    def build_OPT
+      ""
     end
 
   end
