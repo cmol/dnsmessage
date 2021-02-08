@@ -19,11 +19,12 @@ module DNSMessage
     end
 
     def parse(input)
+      name_ptrs = {}
       parse_header(input)
-      idx = parse_questions(input, @qdcount)
-      @answers, idx     = parse_records(input, @ancount, idx)
-      @authority, idx   = parse_records(input, @nscount, idx)
-      @additionals, idx = parse_records(input, @arcount, idx)
+      idx = parse_questions(input, @qdcount, name_ptrs)
+      @answers, idx     = parse_records(input, @ancount, idx, name_ptrs)
+      @authority, idx   = parse_records(input, @nscount, idx, name_ptrs)
+      @additionals, idx = parse_records(input, @arcount, idx, name_ptrs)
     end
 
     def self.parse(input)
@@ -46,29 +47,12 @@ module DNSMessage
       @rcode  =  opts        & 0xf
     end
 
-    def parse_name(message, idx)
-      # Read name loop
-      name = []
-      loop do
-        length = message[idx].unpack("c").first
-        idx += 1
-        if length & NAME_POINTER == NAME_POINTER
-          ptr = ((length << 8) | message[idx].unpack("c").first) & POINTER_MASK
-          return [parse_name(message, ptr).first,idx+1]
-        elsif length == 0
-          break
-        else
-          name << message[idx...idx+length]
-          idx += length
-        end
-      end
-      [name.join("."), idx]
-    end
-
-    def parse_questions(message, num_questions)
+    def parse_questions(message, num_questions, name_ptrs)
       idx = HEADER_SIZE # Header takes up the first 12 bytes
       @questions = (0...num_questions).map do
-        name, idx = parse_name(message, idx)
+        name, size, ptr = DNSMessage::Name.parse(message[idx..-1], name_ptrs)
+        name_ptrs[idx] = name if ptr
+        idx += size
 
         # take last four bytes
         type, klass = message[idx..-1].unpack("n2")
@@ -79,9 +63,12 @@ module DNSMessage
       idx
     end
 
-    def parse_records(message, num_records, idx)
+    def parse_records(message, num_records, idx, name_ptrs)
       [num_records.times.map do
-        name, idx = parse_name(message, idx)
+        name, size, ptr = DNSMessage::Name.parse(message[idx..-1], name_ptrs)
+        name_ptrs[ptr] = name if ptr
+        idx += size
+
         type, klass, ttl, rdata_length = message[idx...idx+10].unpack("nnNn")
         idx += 10
         rdata = message[idx...idx+rdata_length]

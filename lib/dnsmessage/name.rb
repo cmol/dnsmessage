@@ -13,7 +13,7 @@ module DNSMessage
         idx += 1
         if length & NAME_POINTER == NAME_POINTER
           ptr = ((length << 8) | record[idx].unpack("c").first) & POINTER_MASK
-          return [name_pointers[ptr],idx+1]
+          return [name_pointers[ptr],idx+1,nil]
         elsif length == 0
           break
         else
@@ -21,7 +21,7 @@ module DNSMessage
           idx += length
         end
       end
-      [name.join("."), idx]
+      [name.join("."), idx, true]
     end
 
   end

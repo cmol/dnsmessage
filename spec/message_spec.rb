@@ -48,21 +48,10 @@ RSpec.describe DNSMessage::Message do
       .to raise_error(StandardError)
   end
 
-  it "will parse DNS name directly" do
-    r = DNSMessage::Message.new()
-    name, _ = r.parse_name(good_reply, 12)
-    expect(name).to eq("cmol.dk")
-  end
-
-  it "will parse DNS name via pointer" do
-    r = DNSMessage::Message.new()
-    name, _ = r.parse_name(good_reply, 25)
-    expect(name).to eq("cmol.dk")
-  end
-
   it "will parse DNS record" do
     q = DNSMessage::Message.new()
-    expect(q.parse_records(good_reply, 1, 25)).to \
+    name_ptrs = {0x0c => "cmol.dk"}
+    expect(q.parse_records(good_reply, 1, 25, name_ptrs)).to \
       eq([[["cmol.dk",
            DNSMessage::Type::A,
            DNSMessage::Class::IN,
