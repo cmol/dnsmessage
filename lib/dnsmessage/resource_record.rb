@@ -46,6 +46,11 @@ module DNSMessage
     def parse_OPT(rdata, length)
     end
 
+    def parse_TXT(rdata, length)
+      txt_length = rdata[0].ord
+      rdata[1..txt_length]
+    end
+
     ##
     ## Builders
     ##
