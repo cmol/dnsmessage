@@ -105,7 +105,8 @@ module DNSMessage
 
     def build_questions(name_pointers, idx)
       @questions.map do | name, type, klass |
-        name_bytes = build_name(name,name_pointers,idx)
+        name_bytes, add_to_hash = DNSMessage::Name.build(name,name_pointers)
+        name_pointers[name] = idx if add_to_hash
         name_bytes + [type,klass].pack("n2")
       end.join("")
     end
@@ -124,20 +125,10 @@ module DNSMessage
 
     def build_record(name_pointers, idx, records)
       records.map do |name, type, klass, ttl, rdata|
-        name_bytes = build_name(name,name_pointers,idx)
+        name_bytes, add_to_hash = DNSMessage::Name.build(name,name_pointers)
+        name_pointers[name] = idx if add_to_hash
         name_bytes + [type, klass, ttl, rdata.length].pack("nnNn") + rdata
       end.join("")
-    end
-
-    def build_name(name, name_pointers, idx)
-      if name_pointers[name]
-        name_bytes = [(name_pointers[name] | NAME_POINTER << 8)].pack("n")
-      else
-        name_pointers[name] = idx
-        name_bytes = name.split(".").map do | section |
-          section.length.chr + section
-        end.join("") + "\x0" # Terminate will nullptr
-      end
     end
 
     def check_validity

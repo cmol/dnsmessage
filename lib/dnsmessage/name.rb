@@ -24,5 +24,16 @@ module DNSMessage
       [name.join("."), idx, true]
     end
 
+    def self.build(name,name_pointers)
+      if name_pointers[name]
+        [[(name_pointers[name] | NAME_POINTER << 8)].pack("n"),false]
+      else
+        [name_bytes = name.split(".").map do | section |
+          section.length.chr + section
+        end.join("") + "\x0", # Terminate will nullptr
+        true]
+      end
+    end
+
   end
 end
