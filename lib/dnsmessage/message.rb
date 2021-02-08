@@ -109,7 +109,11 @@ module DNSMessage
              (@ra     & 0x1) << 7  |
              (@z      & 0x7) << 4  |
              (@z      & 0xf)
-      [@id, opts, @qdcount, @ancount, @nscount, @arcount].pack("n6")
+      [@id, opts,
+       @questions.length,
+       @answers.length,
+       @authority.length,
+       @additionals.length].pack("n6")
     end
 
     def build_questions(name_pointers, idx)
