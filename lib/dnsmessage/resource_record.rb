@@ -8,8 +8,13 @@ module DNSMessage
     #  return super(method, *args, &block) unless name.to_s =~ /^[parse|build]_\w+/
     #end
 
-    def initialize(record, name_pointers)
-      parse(record, name_pointers) if record
+    def initialize(name: nil, type: nil, klass: DNSMessage::Class::IN, ttl: 0,
+                   rdata: nil)
+      @name  = name
+      @type  = type
+      @klass = klass
+      @ttl   = ttl
+      @rdata = rdata
     end
 
     def type_str(type)
@@ -18,6 +23,12 @@ module DNSMessage
 
     def add_to_hash?
       @add_to_hash
+    end
+
+    def self.parse(record, name_pointers)
+      self.new().tap do |rr|
+        rr.parse(record, name_pointers)
+      end
     end
 
     def parse(record, name_pointers)
@@ -32,7 +43,8 @@ module DNSMessage
       name_bytes, add = DNSMessage::Name.build(@name, name_pointers)
       name_pointers[@name] = idx if add
       data = send("build_#{type_str(@type)}")
-      name_bytes + [@type, @klass, @ttl, data.length].pack("nnNn") + data
+      @rdata_length = data.length
+      name_bytes + [@type, @klass, @ttl, @rdata_length].pack("nnNn") + data
     end
 
     ##
@@ -61,6 +73,10 @@ module DNSMessage
 
     def build_OPT
       ""
+    end
+
+    def build_TXT
+      @rdata.length.chr + rdata
     end
 
   end
