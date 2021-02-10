@@ -19,12 +19,12 @@ module DNSMessage
     end
 
     def parse(input)
-      name_ptrs = {}
+      pointer = Pointer.new()
       parse_header(input)
-      idx = parse_questions(input, @qdcount, name_ptrs)
-      @answers, idx     = parse_records(input, @ancount, idx, name_ptrs)
-      @authority, idx   = parse_records(input, @nscount, idx, name_ptrs)
-      @additionals, idx = parse_records(input, @arcount, idx, name_ptrs)
+      idx = parse_questions(input, @qdcount, pointer)
+      @answers, idx     = parse_records(input, @ancount, idx, pointer)
+      @authority, idx   = parse_records(input, @nscount, idx, pointer)
+      @additionals, idx = parse_records(input, @arcount, idx, pointer)
     end
 
     def self.parse(input)
@@ -47,11 +47,11 @@ module DNSMessage
       @rcode  =  opts        & 0xf
     end
 
-    def parse_questions(message, num_questions, name_ptrs)
+    def parse_questions(message, num_questions, pointer)
       idx = HEADER_SIZE # Header takes up the first 12 bytes
       @questions = (0...num_questions).map do
-        name, size, ptr = DNSMessage::Name.parse(message[idx..-1], name_ptrs)
-        name_ptrs[idx] = name if ptr
+        name, size, ptr = Name.parse(message[idx..-1], pointer)
+        pointer.add(idx, name) if ptr
         idx += size
 
         # take last four bytes
@@ -63,10 +63,10 @@ module DNSMessage
       idx
     end
 
-    def parse_records(message, num_records, idx, name_ptrs)
+    def parse_records(message, num_records, idx, pointer)
       [num_records.times.map do
-        DNSMessage::ResourceRecord.parse(message[idx..-1],name_ptrs).tap do | rr |
-          name_ptrs[idx] = rr.name if rr.add_to_hash?
+        ResourceRecord.parse(message[idx..-1],pointer).tap do | rr |
+          pointer.add(idx, rr.name) if rr.add_to_hash?
           idx += rr.size
         end
       end,
@@ -74,12 +74,12 @@ module DNSMessage
     end
 
     def build
-      name_pointers = {}
+      pointer = Pointer.new()
       packet  = build_header
-      packet << build_questions(name_pointers, packet.size)
-      packet << build_answers(name_pointers, packet.size)
-      packet << build_authority(name_pointers, packet.size)
-      packet << build_additionals(name_pointers,packet.size)
+      packet << build_questions(pointer, packet.size)
+      packet << build_answers(pointer, packet.size)
+      packet << build_authority(pointer, packet.size)
+      packet << build_additionals(pointer,packet.size)
     end
 
     def build_header
@@ -98,29 +98,29 @@ module DNSMessage
        @additionals.length].pack("n6")
     end
 
-    def build_questions(name_pointers, idx)
+    def build_questions(pointer, idx)
       @questions.map do | name, type, klass |
-        name_bytes, add_to_hash = DNSMessage::Name.build(name,name_pointers)
-        name_pointers[name] = idx if add_to_hash
+        name_bytes, add_to_hash = Name.build(name,pointer)
+        pointer.add(name, idx) if add_to_hash
         name_bytes + [type,klass].pack("n2")
       end.join("")
     end
 
-    def build_answers(name_pointers, idx)
-      build_record(name_pointers, idx, @answers)
+    def build_answers(pointer, idx)
+      build_record(pointer, idx, @answers)
     end
 
-    def build_authority(name_pointers, idx)
-      build_record(name_pointers, idx, @authority)
+    def build_authority(pointer, idx)
+      build_record(pointer, idx, @authority)
     end
 
-    def build_additionals(name_pointers, idx)
-      build_record(name_pointers, idx, @additionals)
+    def build_additionals(pointer, idx)
+      build_record(pointer, idx, @additionals)
     end
 
-    def build_record(name_pointers, idx, records)
+    def build_record(pointer, idx, records)
       records.map do | rr |
-        rr.build(name_pointers,idx).tap do | r |
+        rr.build(pointer,idx).tap do | r |
           idx += r.length
         end
       end.join("")

@@ -25,23 +25,23 @@ module DNSMessage
       @add_to_hash
     end
 
-    def self.parse(record, name_pointers)
+    def self.parse(record, ptr)
       self.new().tap do |rr|
-        rr.parse(record, name_pointers)
+        rr.parse(record, ptr)
       end
     end
 
-    def parse(record, name_pointers)
-      @name, idx, @add_to_hash = DNSMessage::Name.parse(record,name_pointers)
+    def parse(record, ptr)
+      @name, idx, @add_to_hash = DNSMessage::Name.parse(record,ptr)
       @type, @klass, @ttl, rdata_length = record[idx...idx+10].unpack("nnNn")
       @rdata = send("parse_#{type_str(@type)}", record[idx+10..-1], rdata_length)
       @size = idx + 10 + rdata_length
     end
 
-    def build(name_pointers,idx)
+    def build(ptr,idx)
       return "" unless self.respond_to?("build_#{type_str(@type)}")
-      name_bytes, add = DNSMessage::Name.build(@name, name_pointers)
-      name_pointers[@name] = idx if add
+      name_bytes, add = DNSMessage::Name.build(@name, ptr)
+      ptr.add(@name, idx) if add
       data = send("build_#{type_str(@type)}")
       @rdata_length = data.length
       name_bytes + [@type, @klass, @ttl, @rdata_length].pack("nnNn") + data
@@ -61,6 +61,11 @@ module DNSMessage
     def parse_TXT(rdata, length)
       txt_length = rdata[0].ord
       rdata[1..txt_length]
+    end
+
+    def parse_CNAME(rdata,length)
+      name, idx, add = DNSMessage::Name.parse(rdata[0...length], name_pointers)
+      name_pointers[]
     end
 
     ##
