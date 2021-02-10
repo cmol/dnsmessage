@@ -5,6 +5,15 @@ module DNSMessage
       @hash = hash
     end
 
+    def add_arr(arr, offset)
+      return unless arr
+      arr.each do |k,v|
+        k += offset if k.class == Integer
+        v += offset if v.class == Integer
+        add(k,v)
+      end
+    end
+
     def add(key,value)
       if key.class == Integer
         add_name(key,value)

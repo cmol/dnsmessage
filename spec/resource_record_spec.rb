@@ -53,4 +53,28 @@ RSpec.describe DNSMessage::ResourceRecord do
     expect(rr.build(name_pointers, 0).bytes).to eq(txt_record.bytes)
   end
 
+  it "will parse CNAME record correctly" do
+    cname_record = "\xc0\x0c\x00\x05\x00\x01\x00\x00\x1c\x20\x00\x02\xc0\x10"
+    name_pointers = DNSMessage::Pointer.new({0x0c => "cmol.dk"})
+    rr = DNSMessage::ResourceRecord.parse(cname_record, name_pointers)
+    expect(rr).to have_attributes(name: "cmol.dk",
+                                  type: DNSMessage::Type::CNAME,
+                                  klass: DNSMessage::Class::IN,
+                                  ttl: 7200,
+                                  rdata: "cmol.dk")
+  end
+
+  it "will build CNAME record correctly" do
+    cname_record = "\xc0\x0c\x00\x05\x00\x01\x00\x00\x1c\x20\x00\x02\xc0\x10"
+    name_pointers = DNSMessage::Pointer.new({"www.cmol.dk" => 0x0c,
+                                             "cmol.dk" => 0x10})
+    rr = DNSMessage::ResourceRecord.new(
+      name: "www.cmol.dk",
+      type: DNSMessage::Type::CNAME,
+      ttl: 7200,
+      rdata: "cmol.dk"
+    )
+    expect(rr.build(name_pointers,0).bytes).to eq(cname_record.bytes)
+  end
+
 end

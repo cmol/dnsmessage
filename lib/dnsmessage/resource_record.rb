@@ -15,13 +15,14 @@ module DNSMessage
       @klass = klass
       @ttl   = ttl
       @rdata = rdata
+      @add_to_hash = []
     end
 
     def type_str(type)
       Type::TYPE_STRINGS[type]
     end
 
-    def add_to_hash?
+    def add_to_hash
       @add_to_hash
     end
 
@@ -32,9 +33,10 @@ module DNSMessage
     end
 
     def parse(record, ptr)
-      @name, idx, @add_to_hash = DNSMessage::Name.parse(record,ptr)
+      @name, idx, add = DNSMessage::Name.parse(record,ptr)
+      @add_to_hash << [idx, @name] if add
       @type, @klass, @ttl, rdata_length = record[idx...idx+10].unpack("nnNn")
-      @rdata = send("parse_#{type_str(@type)}", record[idx+10..-1], rdata_length)
+      @rdata = send("parse_#{type_str(@type)}", record, idx+10, rdata_length, ptr)
       @size = idx + 10 + rdata_length
     end
 
@@ -42,7 +44,7 @@ module DNSMessage
       return "" unless self.respond_to?("build_#{type_str(@type)}")
       name_bytes, add = DNSMessage::Name.build(@name, ptr)
       ptr.add(@name, idx) if add
-      data = send("build_#{type_str(@type)}")
+      data = send("build_#{type_str(@type)}",ptr)
       @rdata_length = data.length
       name_bytes + [@type, @klass, @ttl, @rdata_length].pack("nnNn") + data
     end
@@ -51,37 +53,42 @@ module DNSMessage
     ## Parsers
     ##
 
-    def parse_A(rdata, length)
-      IPAddr.new_ntoh(rdata[0...length])
+    def parse_A(rdata, start, length, ptr)
+      IPAddr.new_ntoh(rdata[start...start+length])
     end
 
-    def parse_OPT(rdata, length)
+    def parse_OPT(rdata, start, length, ptr)
     end
 
-    def parse_TXT(rdata, length)
-      txt_length = rdata[0].ord
-      rdata[1..txt_length]
+    def parse_TXT(rdata, start, length, ptr)
+      txt_length = rdata[start].ord
+      rdata[start+1..start+txt_length]
     end
 
-    def parse_CNAME(rdata,length)
-      name, idx, add = DNSMessage::Name.parse(rdata[0...length], name_pointers)
-      name_pointers[]
+    def parse_CNAME(rdata, start, length, ptr)
+      name, idx, add = Name.parse(rdata[0...length], ptr)
+      @add_to_hash << [start+idx, name] if add
+      name
     end
 
     ##
     ## Builders
     ##
 
-    def build_A
+    def build_A(ptr)
       @rdata.hton
     end
 
-    def build_OPT
+    def build_OPT(ptr)
       ""
     end
 
-    def build_TXT
+    def build_TXT(ptr)
       @rdata.length.chr + rdata
+    end
+
+    def build_CNAME(ptr)
+      Name.build(@rdata, ptr)[0]
     end
 
   end

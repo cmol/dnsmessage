@@ -66,7 +66,7 @@ module DNSMessage
     def parse_records(message, num_records, idx, pointer)
       [num_records.times.map do
         ResourceRecord.parse(message[idx..-1],pointer).tap do | rr |
-          pointer.add(idx, rr.name) if rr.add_to_hash?
+          pointer.add_arr(rr.add_to_hash,idx)
           idx += rr.size
         end
       end,
