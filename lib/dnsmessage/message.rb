@@ -16,6 +16,7 @@ module DNSMessage
       @answers     = []
       @additionals = []
       @authority   = []
+      @id = @qr = @opcode = @aa = @tc = @rd = @ra = @z = $rcode = 0
     end
 
     def parse(input)
