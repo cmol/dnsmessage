@@ -1,12 +1,24 @@
 module DNSMessage
   class ResourceRecord
 
+    PARSERS = {
+      Type::A     => :parse_ip,
+      Type::AAAA  => :parse_ip,
+      Type::CNAME => :parse_name,
+      Type::OPT   => :parse_opt,
+      Type::TXT   => :parse_text
+    }
+
+    BUILDERS = {
+      Type::A     => :build_ip,
+      Type::AAAA  => :build_ip,
+      Type::CNAME => :build_name,
+      Type::OPT   => :build_opt,
+      Type::TXT   => :build_text
+    }
+
     attr_accessor :name, :type, :klass, :ttl, :rdata
     attr_reader :size, :add_to_hash
-
-    #def method_missing(name, *args, &block)
-    #  return super(method, *args, &block) unless name.to_s =~ /^[parse|build]_\w+/
-    #end
 
     def initialize(name: nil, type: nil, klass: Class::IN, ttl: 0,
                    rdata: nil)
@@ -16,10 +28,6 @@ module DNSMessage
       @ttl   = ttl
       @rdata = rdata
       @add_to_hash = []
-    end
-
-    def type_str(type)
-      Type::TYPE_STRINGS[type]
     end
 
     def add_to_hash
@@ -36,41 +44,47 @@ module DNSMessage
       @name, idx, add = Name.parse(record,ptr)
       @add_to_hash << [idx, @name] if add
       @type, @klass, @ttl, rdata_length = record[idx...idx+10].unpack("nnNn")
-      @rdata = send("parse_#{type_str(@type)}", record, idx+10, rdata_length, ptr)
+      @rdata = send(parser(@type), record, idx+10, rdata_length, ptr)
       @size = idx + 10 + rdata_length
     end
 
     def build(ptr,idx)
-      return "" unless self.respond_to?("build_#{type_str(@type)}")
+      return "" unless BUILDERS[type]
 
       name_bytes, add = Name.build(@name, ptr)
       ptr.add(@name, idx) if add
-      data = send("build_#{type_str(@type)}",ptr, idx + name_bytes.length)
+      data = send(builder(@type),ptr, idx + name_bytes.length)
       @rdata_length = data.length
       name_bytes + [@type, @klass, @ttl, @rdata_length].pack("nnNn") + data
+    end
+
+    private
+
+    def parser(type)
+      PARSERS[type]
+    end
+
+    def builder(type)
+      BUILDERS[type]
     end
 
     ##
     ## Parsers
     ##
 
-    def parse_A(rdata, start, length, ptr)
+    def parse_ip(rdata, start, length, ptr)
       IPAddr.new_ntoh(rdata[start...start+length])
     end
 
-    def parse_AAAA(rdata, start, length, ptr)
-      parse_A(rdata, start, length,ptr)
+    def parse_opt(rdata, start, length, ptr)
     end
 
-    def parse_OPT(rdata, start, length, ptr)
-    end
-
-    def parse_TXT(rdata, start, length, ptr)
+    def parse_text(rdata, start, length, ptr)
       txt_length = rdata[start].ord
       rdata[start+1..start+txt_length]
     end
 
-    def parse_CNAME(rdata, start, length, ptr)
+    def parse_name(rdata, start, length, ptr)
       name, idx, add = Name.parse(rdata[0...length], ptr)
       @add_to_hash << [start+idx, name] if add
       name
@@ -80,24 +94,19 @@ module DNSMessage
     ## Builders
     ##
 
-    def build_A(ptr, _)
+    def build_ip(ptr, _)
       @rdata.hton
     end
 
-    def build_AAAA(ptr, idx)
-      build_A(ptr, idx)
-    end
-
-    def build_OPT(ptr, _)
+    def build_opt(ptr, _)
       ""
     end
 
-    def build_TXT(ptr, _)
+    def build_text(ptr, _)
       @rdata.length.chr + rdata
     end
 
-    def build_CNAME(ptr, idx)
-      # TODO add name to ptr
+    def build_name(ptr, idx)
       Name.build(@rdata, ptr).tap do | bytes, add |
         ptr.add(@rdata,idx) if add
         return bytes
