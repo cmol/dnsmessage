@@ -29,9 +29,9 @@ module DNSMessage
     end
 
     def self.parse(input)
-      message = self.new()
-      message.parse(input)
-      message
+      self.new().tap do | m |
+        m.parse(input)
+      end
     end
 
     def self.reply_to(q)
