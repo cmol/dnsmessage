@@ -71,7 +71,7 @@ RSpec.describe DNSMessage::Message do
     expect(q.parse_records(@good_reply, 1, 25, ptr)[0][0]).to \
       have_attributes(
              name: "cmol.dk",
-             type: 7200,
+             ttl: 7200,
              klass: DNSMessage::Class::IN,
              type: DNSMessage::Type::A,
              rdata: IPAddr.new("93.90.114.55")
@@ -93,7 +93,7 @@ RSpec.describe DNSMessage::Message do
                                  answers: match_array([
                                    have_attributes(
                                      name: "cmol.dk",
-                                     type: 7200,
+                                     ttl: 7200,
                                      klass: DNSMessage::Class::IN,
                                      type: DNSMessage::Type::A,
                                      rdata: IPAddr.new("93.90.114.55")
