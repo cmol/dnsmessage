@@ -2,6 +2,7 @@ require "dnsmessage/version"
 require "dnsmessage/enums"
 require "dnsmessage/message"
 require "dnsmessage/resource_record"
+require "dnsmessage/question"
 require "dnsmessage/name"
 require "dnsmessage/pointer"
 
