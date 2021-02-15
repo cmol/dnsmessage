@@ -4,7 +4,7 @@ module DNSMessage
   NAME_POINTER = 0xc0
   POINTER_MASK = 0x3fff
 
-    def self.parse(record, pointer)
+    def self.parse(record, ptr)
       # Read name loop
       idx = 0
       name = []
@@ -12,8 +12,8 @@ module DNSMessage
         length = record[idx].unpack("c").first
         idx += 1
         if length & NAME_POINTER == NAME_POINTER
-          ptr = ((length << 8) | record[idx].unpack("c").first) & POINTER_MASK
-          return [pointer.find(ptr),idx+1,false]
+          pointer = ((length << 8) | record[idx].unpack("c").first) & POINTER_MASK
+          return [ptr.find(pointer),idx+1,false]
         elsif length == 0
           break
         else
