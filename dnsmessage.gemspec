@@ -6,13 +6,13 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Claus Lensbøl"]
   spec.email         = ["cmol@cmol.dk"]
 
-  spec.summary       = %q{Ruby library to write and parse DNS messages}
-  spec.description   = %q{Ruby library that will let you parse and write all details of DNS messages}
+  spec.summary       = %q{Ruby library to build and parse DNS messages}
+  spec.description   = %q{Ruby library that will let you parse and build all details of DNS messages}
   spec.homepage      = "https://github.com/cmol/dnsmessage"
   spec.license       = "MIT"
   spec.required_ruby_version = Gem::Requirement.new(">= 2.3.0")
 
-  spec.metadata["allowed_push_host"] = "TODO: Set to 'http://mygemserver.com'"
+  spec.metadata["allowed_push_host"] = "https://rubygems.org"
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/cmol/dnsmessage"
