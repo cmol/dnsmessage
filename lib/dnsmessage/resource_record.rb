@@ -17,7 +17,8 @@ module DNSMessage
       Type::TXT   => :build_text
     }
 
-    attr_accessor :name, :type, :klass, :ttl, :rdata
+    attr_accessor :name, :type, :klass, :ttl, :rdata,
+      :opt_udp, :opt_rcode, :opt_edns0_version, :opt_z_dnssec
     attr_reader :size, :add_to_hash
 
     def initialize(name: nil, type: nil, klass: Class::IN, ttl: 0,
@@ -77,6 +78,10 @@ module DNSMessage
     end
 
     def parse_opt(rdata, start, length, ptr)
+      @opt_udp           = @klass
+      @opt_rcode, @opt_edns0_version, @opt_z_dnssec =
+        [@ttl].pack("N").unpack("CCn")
+      @opt_z_dnssec = @opt_z_dnssec >> 15
     end
 
     def parse_text(rdata, start, length, ptr)
@@ -99,7 +104,11 @@ module DNSMessage
     end
 
     def build_opt(ptr, _)
-      ""
+      @klass = @opt_udp
+      @ttl = [@opt_rcode,
+              @opt_edns0_version,
+              @opt_z_dnssec << 15].pack("CCn").unpack("N").first
+      "" # Set RDATA to nothing
     end
 
     def build_text(ptr, _)

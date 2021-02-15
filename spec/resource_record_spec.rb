@@ -13,6 +13,8 @@ RSpec.describe DNSMessage::ResourceRecord do
       "\xc0\x0c\x00\x10\x00\x01\x00\x00\x1c\x1f\x00\x22\x21\x76\x3d\x73" \
       "\x70\x66\x31\x20\x69\x6e\x63\x6c\x75\x64\x65\x3a\x65\x6d\x61\x69" \
       "\x6c\x73\x72\x76\x72\x2e\x63\x6f\x6d\x20\x7e\x61\x6c\x6c"
+    @opt_record = "\x00\x00\x29\x10\x00\x00\x00\x00\x00\x00\x00"
+
   end
 
   it "will parse A record correctly" do
@@ -91,6 +93,28 @@ RSpec.describe DNSMessage::ResourceRecord do
       rdata: "cmol.dk"
     )
     expect(rr.build(name_pointers,0).bytes).to eq(@cname_record.bytes)
+  end
+
+  it "will parse OPT record correctly" do
+    rr = DNSMessage::ResourceRecord.parse(@opt_record, @ptr_name)
+    expect(rr).to have_attributes(name: "",
+                                  type: DNSMessage::Type::OPT,
+                                  opt_udp: 4096,
+                                  opt_rcode: 0,
+                                  opt_edns0_version: 0,
+                                  opt_z_dnssec: 0)
+  end
+
+  it "will build OPT record correctly" do
+    rr = DNSMessage::ResourceRecord.new(
+      name: "",
+      type: DNSMessage::Type::OPT
+    )
+    rr.opt_udp = 4096
+    rr.opt_rcode = 0
+    rr.opt_edns0_version = 0
+    rr.opt_z_dnssec = 0
+    expect(rr.build(@name_ptr,0).bytes).to eq(@opt_record.bytes)
   end
 
 end

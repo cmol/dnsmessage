@@ -28,13 +28,23 @@ RSpec.describe DNSMessage::Message do
     expect(q).to have_attributes(qr: DNSMessage::Message::QUERY,
                                  qdcount: 1,
                                  arcount: 1,
-                                 questions: [
+                                 questions: match_array([
                                    have_attributes(
                                      name:  "cmol.dk",
                                      type:  DNSMessage::Type::A,
                                      klass: DNSMessage::Class::IN
                                    )
-                                 ]
+                                 ]),
+                                 additionals: match_array([
+                                   have_attributes(
+                                     name:  "",
+                                     type:  DNSMessage::Type::OPT,
+                                     opt_udp: 512,
+                                     opt_rcode: 0,
+                                     opt_edns0_version: 0,
+                                     opt_z_dnssec: 0
+                                   )
+                                 ])
                                 )
   end
 
@@ -87,6 +97,16 @@ RSpec.describe DNSMessage::Message do
                                      klass: DNSMessage::Class::IN,
                                      type: DNSMessage::Type::A,
                                      rdata: IPAddr.new("93.90.114.55")
+                                   )
+                                 ]),
+                                 additionals: match_array([
+                                   have_attributes(
+                                     name:  "",
+                                     type:  DNSMessage::Type::OPT,
+                                     opt_udp: 4096,
+                                     opt_rcode: 0,
+                                     opt_edns0_version: 0,
+                                     opt_z_dnssec: 0
                                    )
                                  ])
                                 )
