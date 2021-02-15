@@ -57,8 +57,8 @@ RSpec.describe DNSMessage::Message do
 
   it "will parse DNS record" do
     q  = DNSMessage::Message.new()
-    name_ptrs = DNSMessage::Pointer.new({0x0c => "cmol.dk"})
-    expect(q.parse_records(@good_reply, 1, 25, name_ptrs)[0][0]).to \
+    ptr = DNSMessage::Pointer.new({0x0c => "cmol.dk"})
+    expect(q.parse_records(@good_reply, 1, 25, ptr)[0][0]).to \
       have_attributes(
              name: "cmol.dk",
              type: 7200,
