@@ -42,9 +42,10 @@ module DNSMessage
 
     def build(ptr,idx)
       return "" unless self.respond_to?("build_#{type_str(@type)}")
+
       name_bytes, add = Name.build(@name, ptr)
       ptr.add(@name, idx) if add
-      data = send("build_#{type_str(@type)}",ptr)
+      data = send("build_#{type_str(@type)}",ptr, idx + name_bytes.length)
       @rdata_length = data.length
       name_bytes + [@type, @klass, @ttl, @rdata_length].pack("nnNn") + data
     end
@@ -75,21 +76,24 @@ module DNSMessage
     ## Builders
     ##
 
-    def build_A(ptr)
+    def build_A(ptr, _)
       @rdata.hton
     end
 
-    def build_OPT(ptr)
+    def build_OPT(ptr, _)
       ""
     end
 
-    def build_TXT(ptr)
+    def build_TXT(ptr, _)
       @rdata.length.chr + rdata
     end
 
-    def build_CNAME(ptr)
+    def build_CNAME(ptr, idx)
       # TODO add name to ptr
-      Name.build(@rdata, ptr)[0]
+      Name.build(@rdata, ptr).tap do | bytes, add |
+        ptr.add(@rdata,idx) if add
+        return bytes
+      end
     end
 
   end
