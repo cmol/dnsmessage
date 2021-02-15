@@ -72,9 +72,9 @@ Currently implemented types are:
 * OPT
 * TXT
 
-Other records should be easy to add on a per-need basis as they should
-be based on the building blocks of already existing. Look at
-contributing for details on adding RR types.
+Other records should be easy to add on a per-need basis as they can be
+based on the building blocks of already existing parsers and builders.
+Look at contributing for details on adding RR types.
 
 ## Development
 
