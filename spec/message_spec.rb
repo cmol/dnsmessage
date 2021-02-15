@@ -116,4 +116,14 @@ RSpec.describe DNSMessage::Message do
     r = DNSMessage::Message::parse(@good_reply).build
     expect(r.bytes).to eq(@good_reply.bytes)
   end
+
+  it "will create reply to query" do
+    q = DNSMessage::Message::parse(@good_query)
+    r = DNSMessage::Message::reply_to(q)
+    expect(r).to have_attributes(qr: DNSMessage::Message::REPLY,
+                                 id: q.id,
+                                 qdcount: 1,
+                                 questions: q.questions
+                                )
+  end
 end

@@ -7,9 +7,9 @@ module DNSMessage
     REPLY        = 1
     HEADER_SIZE  = 12
 
-    attr_accessor :questions, :answers, :authority, :additionals
-    attr_reader :id, :qr, :opcode, :aa, :tc, :rd, :ra, :z, :rcode,
-      :qdcount, :ancount, :nscount, :arcount
+    attr_accessor :questions, :answers, :authority, :additionals,
+                  :id, :qr, :opcode, :aa, :tc, :rd, :ra, :z, :rcode,
+                  :qdcount, :ancount, :nscount, :arcount
 
     def initialize()
       @questions   = []
@@ -32,6 +32,16 @@ module DNSMessage
       message.parse(input)
       message
     end
+
+    def self.reply_to(q)
+      self.new().tap do | r |
+        r.id = q.id
+        r.qr = REPLY
+        r.questions = q.questions
+        r.qdcount = q.qdcount
+      end
+    end
+
 
     def parse_header(message)
       return nil if message.nil? || message.empty?
