@@ -7,7 +7,9 @@ Gem::Specification.new do |spec|
   spec.email         = ["cmol@cmol.dk"]
 
   spec.summary       = %q{Ruby library to build and parse DNS messages}
-  spec.description   = %q{Ruby library that will let you parse and build all details of DNS messages}
+  spec.description   = %q{A full featured DNS parser. The library supports DNS
+name compression and gives access to parse, build, and manipulate all aspects
+of the DNS queries and replies.}
   spec.homepage      = "https://github.com/cmol/dnsmessage"
   spec.license       = "MIT"
   spec.required_ruby_version = Gem::Requirement.new(">= 2.3.0")

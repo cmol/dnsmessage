@@ -1,6 +1,6 @@
 The MIT License (MIT)
 
-Copyright (c) 2020 Claus Lensbøl
+Copyright (c) 2021 Claus Lensbøl
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -1,6 +1,8 @@
 # This example implements an IP discover mechanism for IPv4 and IPv6.
 # Run server with `ruby server.rb` and query with something like
 # `dig my.ip @[address_of_server]`
+# This server is not intended for production use unless you have very low
+# volumes of traffic.
 
 require "socket"
 require "dnsmessage"
