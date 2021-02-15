@@ -18,7 +18,7 @@ module DNSMessage
 
     def parse(question, ptr, idx)
         @name, @size, add = Name.parse(question[idx..-1], ptr)
-        pointer.add(idx, @name) if add
+        ptr.add(idx, @name) if add
 
         # take last four bytes
         @type, @klass = question[(idx+@size)..-1].unpack("n2")
@@ -27,7 +27,7 @@ module DNSMessage
 
     def build(ptr,idx)
         name_bytes, add = Name.build(@name,ptr)
-        pointer.add(@name, idx) if add
+        ptr.add(@name, idx) if add
         name_bytes + [type,klass].pack("n2")
     end
 

@@ -25,9 +25,13 @@ RSpec.describe DNSMessage::Message do
     expect(q).to have_attributes(qr: DNSMessage::Message::QUERY,
                                  qdcount: 1,
                                  arcount: 1,
-                                 questions: [["cmol.dk",
-                                     DNSMessage::Type::A,
-                                     DNSMessage::Class::IN]]
+                                 questions: [
+                                   have_attributes(
+                                     name:  "cmol.dk",
+                                     type:  DNSMessage::Type::A,
+                                     klass: DNSMessage::Class::IN
+                                   )
+                                 ]
                                 )
   end
 
@@ -66,9 +70,13 @@ RSpec.describe DNSMessage::Message do
     expect(q).to have_attributes(qr: DNSMessage::Message::REPLY,
                                  qdcount: 1,
                                  arcount: 1,
-                                 questions: [["cmol.dk",
-                                     DNSMessage::Type::A,
-                                     DNSMessage::Class::IN]],
+                                 questions: match_array([
+                                   have_attributes(
+                                     name: "cmol.dk",
+                                     klass: DNSMessage::Class::IN,
+                                     type: DNSMessage::Type::A,
+                                   )
+                                 ]),
                                  answers: match_array([
                                    have_attributes(
                                      name: "cmol.dk",

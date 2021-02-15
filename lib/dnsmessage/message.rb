@@ -21,7 +21,7 @@ module DNSMessage
     def parse(input)
       pointer = Pointer.new()
       parse_header(input)
-      idx = parse_questions(input, @qdcount, pointer)
+      idx               = parse_questions(input, @qdcount, pointer)
       @answers, idx     = parse_records(input, @ancount, idx, pointer)
       @authority, idx   = parse_records(input, @nscount, idx, pointer)
       @additionals, idx = parse_records(input, @arcount, idx, pointer)
@@ -50,16 +50,10 @@ module DNSMessage
     def parse_questions(message, num_questions, pointer)
       idx = HEADER_SIZE # Header takes up the first 12 bytes
       @questions = (0...num_questions).map do
-        name, size, ptr = Name.parse(message[idx..-1], pointer)
-        pointer.add(idx, name) if ptr
-        idx += size
-
-        # take last four bytes
-        type, klass = message[idx..-1].unpack("n2")
-        idx += 4
-        [name, type, klass]
+        Question.parse(message, pointer, idx).tap do | q |
+          idx += q.size
+        end
       end
-
       idx
     end
 
@@ -99,10 +93,10 @@ module DNSMessage
     end
 
     def build_questions(pointer, idx)
-      @questions.map do | name, type, klass |
-        name_bytes, add_to_hash = Name.build(name,pointer)
-        pointer.add(name, idx) if add_to_hash
-        name_bytes + [type,klass].pack("n2")
+      @questions.map do | q |
+        q.build(pointer,idx).tap do | bytes |
+          idx += bytes.length
+        end
       end.join("")
     end
 
