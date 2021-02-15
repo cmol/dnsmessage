@@ -117,4 +117,14 @@ RSpec.describe DNSMessage::ResourceRecord do
     expect(rr.build(@name_ptr,0).bytes).to eq(@opt_record.bytes)
   end
 
+  it "will build default OPT record" do
+    rr = DNSMessage::ResourceRecord.default_opt(4096)
+    expect(rr).to have_attributes(name: "",
+                                  type: DNSMessage::Type::OPT,
+                                  opt_udp: 4096,
+                                  opt_rcode: 0,
+                                  opt_edns0_version: 0,
+                                  opt_z_dnssec: 0)
+  end
+
 end

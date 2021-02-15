@@ -59,6 +59,17 @@ module DNSMessage
       name_bytes + [@type, @klass, @ttl, @rdata_length].pack("nnNn") + data
     end
 
+    def self.default_opt(size)
+      self.new().tap do | opt |
+        opt.name = ""
+        opt.type = Type::OPT
+        opt.opt_udp = size
+        opt.opt_rcode = 0
+        opt.opt_edns0_version = 0
+        opt.opt_z_dnssec = 0
+      end
+    end
+
     private
 
     def parser(type)
