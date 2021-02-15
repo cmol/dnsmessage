@@ -58,6 +58,10 @@ module DNSMessage
       IPAddr.new_ntoh(rdata[start...start+length])
     end
 
+    def parse_AAAA(rdata, start, length, ptr)
+      parse_A(rdata, start, length,ptr)
+    end
+
     def parse_OPT(rdata, start, length, ptr)
     end
 
@@ -78,6 +82,10 @@ module DNSMessage
 
     def build_A(ptr, _)
       @rdata.hton
+    end
+
+    def build_AAAA(ptr, idx)
+      build_A(ptr, idx)
     end
 
     def build_OPT(ptr, _)
