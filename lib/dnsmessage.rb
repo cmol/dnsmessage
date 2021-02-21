@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "dnsmessage/version"
 require "dnsmessage/enums"
 require "dnsmessage/message"
