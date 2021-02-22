@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative 'lib/dnsmessage/version'
 
 Gem::Specification.new do |spec|
@@ -28,4 +30,10 @@ of the DNS queries and replies.}
   spec.bindir        = "exe"
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
+
+  # Uncomment to register a new dependency of your gem
+  # spec.add_dependency "example-gem", "~> 1.0"
+
+  # For more information and examples about making a new gem, checkout our
+  # guide at: https://bundler.io/guides/creating_gem.html
 end
