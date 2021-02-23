@@ -1,3 +1,20 @@
+require:
+  - rubocop-rake
+  - rubocop-rspec
+
+# Commonly used screens these days easily fit more than 80 characters.
+Layout/LineLength:
+  Max: 120
+
+# Too short methods lead to extraction of single-use methods, which can make
+# the code easier to read (by naming things), but can also clutter the class
+Metrics/MethodLength:
+  Max: 20
+
+# The guiding principle of classes is SRP, SRP can't be accurately measured by LoC
+Metrics/ClassLength:
+  Max: 1500
+
 Style/StringLiterals:
   Enabled: true
   EnforcedStyle: double_quotes
@@ -6,5 +23,11 @@ Style/StringLiteralsInInterpolation:
   Enabled: true
   EnforcedStyle: double_quotes
 
-Layout/LineLength:
-  Max: 120
+# Most readable form.
+Layout/HashAlignment:
+  EnforcedHashRocketStyle: table
+  EnforcedColonStyle: table
+
+# Rspec kind of breaks without this
+Metrics/BlockLength:
+  IgnoredMethods: ['describe', 'context']

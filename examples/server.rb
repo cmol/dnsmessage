@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This example implements an IP discover mechanism for IPv4 and IPv6.
 # Run server with `ruby server.rb` and query with something like
 # `dig my.ip @[address_of_server]`
@@ -8,7 +10,7 @@ require "socket"
 require "dnsmessage"
 
 LISTEN_ADDR = "::"
-LISTEN_PORT = 12345
+LISTEN_PORT = 12_345
 MSG_LENGTH  = 1400
 FLAGS       = 0
 
@@ -23,10 +25,10 @@ loop do
 
   # Extract client information given as array and log connection
   addr_info = Addrinfo.new(client)
-  puts "Client connected from #{addr_info.ip_address} using " +
-    "#{addr_info.ipv6_v4mapped? ? "IPv4" : "IPv6"}"
+  puts "Client connected from #{addr_info.ip_address} using " \
+       "#{addr_info.ipv6_v4mapped? ? "IPv4" : "IPv6"}"
 
-  response = DNSMessage::Message::reply_to(msg)
+  response = DNSMessage::Message.reply_to(msg)
   opt = DNSMessage::RR.default_opt(512)
 
   # Set IPv6 defaults
@@ -39,10 +41,11 @@ loop do
     ip = addr_info.ipv6_to_ipv4.ip_address
   end
   response.answers << DNSMessage::RR.new(
-    name: "your.ip",
-    type: type,
-    ttl: 10,
-    rdata: IPAddr.new(ip))
+    name:  "your.ip",
+    type:  type,
+    ttl:   10,
+    rdata: IPAddr.new(ip)
+  )
 
   # Be nice and add an EDNS record
   response.additionals << opt

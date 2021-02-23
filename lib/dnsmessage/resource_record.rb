@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
 module DNSMessage
+  # Parse and build Resource Records
   class ResourceRecord
-
     PARSERS = {
       Type::A     => :parse_ip,
       Type::AAAA  => :parse_ip,
       Type::CNAME => :parse_name,
       Type::OPT   => :parse_opt,
       Type::TXT   => :parse_text
-    }
+    }.freeze
 
     BUILDERS = {
       Type::A     => :build_ip,
@@ -17,10 +17,10 @@ module DNSMessage
       Type::CNAME => :build_name,
       Type::OPT   => :build_opt,
       Type::TXT   => :build_text
-    }
+    }.freeze
 
     attr_accessor :name, :type, :klass, :ttl, :rdata,
-      :opt_udp, :opt_rcode, :opt_edns0_version, :opt_z_dnssec
+                  :opt_udp, :opt_rcode, :opt_edns0_version, :opt_z_dnssec
     attr_reader :size, :add_to_hash
 
     def initialize(name: nil, type: nil, klass: Class::IN, ttl: 0,
@@ -33,36 +33,32 @@ module DNSMessage
       @add_to_hash = []
     end
 
-    def add_to_hash
-      @add_to_hash
-    end
-
     def self.parse(record, ptr)
-      self.new().tap do |rr|
+      new.tap do |rr|
         rr.parse(record, ptr)
       end
     end
 
     def parse(record, ptr)
-      @name, idx, add = Name.parse(record,ptr)
+      @name, idx, add = Name.parse(record, ptr)
       @add_to_hash << [idx, @name] if add
-      @type, @klass, @ttl, rdata_length = record[idx...idx+10].unpack("nnNn")
-      @rdata = send(parser(@type), record, idx+10, rdata_length, ptr)
+      @type, @klass, @ttl, rdata_length = record[idx...idx + 10].unpack("nnNn")
+      @rdata = send(parser(@type), record, idx + 10, rdata_length, ptr)
       @size = idx + 10 + rdata_length
     end
 
-    def build(ptr,idx)
+    def build(ptr, idx)
       return "" unless BUILDERS[type]
 
       name_bytes, add = Name.build(@name, ptr)
       ptr.add(@name, idx) if add
-      data = send(builder(@type),ptr, idx + name_bytes.length)
+      data = send(builder(@type), ptr, idx + name_bytes.length)
       @rdata_length = data.length
       name_bytes + [@type, @klass, @ttl, @rdata_length].pack("nnNn") + data
     end
 
     def self.default_opt(size)
-      self.new().tap do | opt |
+      new.tap do |opt|
         opt.name = ""
         opt.type = Type::OPT
         opt.opt_udp = size
@@ -86,25 +82,25 @@ module DNSMessage
     ## Parsers
     ##
 
-    def parse_ip(rdata, start, length, ptr)
-      IPAddr.new_ntoh(rdata[start...start+length])
+    def parse_ip(rdata, start, length, _ptr)
+      IPAddr.new_ntoh(rdata[start...start + length])
     end
 
-    def parse_opt(rdata, start, length, ptr)
-      @opt_udp           = @klass
+    def parse_opt(_rdata, _start, _length, _ptr)
+      @opt_udp = @klass
       @opt_rcode, @opt_edns0_version, @opt_z_dnssec =
         [@ttl].pack("N").unpack("CCn")
       @opt_z_dnssec = @opt_z_dnssec >> 15
     end
 
-    def parse_text(rdata, start, length, ptr)
+    def parse_text(rdata, start, _length, _ptr)
       txt_length = rdata[start].ord
-      rdata[start+1..start+txt_length]
+      rdata[start + 1..start + txt_length]
     end
 
     def parse_name(rdata, start, length, ptr)
       name, idx, add = Name.parse(rdata[0...length], ptr)
-      @add_to_hash << [start+idx, name] if add
+      @add_to_hash << [start + idx, name] if add
       name
     end
 
@@ -112,29 +108,28 @@ module DNSMessage
     ## Builders
     ##
 
-    def build_ip(ptr, _)
+    def build_ip(_ptr, _)
       @rdata.hton
     end
 
-    def build_opt(ptr, _)
+    def build_opt(_ptr, _)
       @klass = @opt_udp
       @ttl = [@opt_rcode,
               @opt_edns0_version,
-              @opt_z_dnssec << 15].pack("CCn").unpack("N").first
+              @opt_z_dnssec << 15].pack("CCn").unpack1("N")
       "" # Set RDATA to nothing
     end
 
-    def build_text(ptr, _)
+    def build_text(_ptr, _)
       @rdata.length.chr + rdata
     end
 
     def build_name(ptr, idx)
-      Name.build(@rdata, ptr).tap do | bytes, add |
-        ptr.add(@rdata,idx) if add
+      Name.build(@rdata, ptr).tap do |bytes, add|
+        ptr.add(@rdata, idx) if add
         return bytes
       end
     end
-
   end
 
   # Add "alias"
