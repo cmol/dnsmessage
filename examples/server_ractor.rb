@@ -4,6 +4,8 @@
 # server with `ruby server.rb` and query with something like `dig my.ip
 # @[address_of_server]` This server is not intended for production use unless
 # you want to experiment with Ractors!
+# This example originally comes from this blog post:
+# https://kirshatrov.com/2020/09/08/ruby-ractor-web-server/
 
 require "socket"
 require "dnsmessage"
@@ -14,8 +16,6 @@ LISTEN_ADDR = "::"
 LISTEN_PORT = 12_345
 MSG_LENGTH  = 1400
 FLAGS       = 0
-
-# Create socket and bind it to the listen on all addresses and the given port
 
 pipe = Ractor.new do
   loop do
@@ -50,6 +50,7 @@ workers = CPU_COUNT.times.map do
         type = DNSMessage::Type::A
         ip = addr_info.ipv6_to_ipv4.ip_address
       end
+
       response.answers << DNSMessage::RR.new(name: "your.ip", type: type,
         ttl: 10, rdata: IPAddr.new(ip))
 
