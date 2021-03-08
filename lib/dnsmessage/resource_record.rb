@@ -132,6 +132,6 @@ module DNSMessage
     end
   end
 
-  # Add "alias"
+  # Add alias
   RR = ResourceRecord
 end
