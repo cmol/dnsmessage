@@ -30,7 +30,7 @@ module DNSMessage
       else
         [name.split(".").map do |section|
           section.length.chr + section
-        end.join("") << "\x0", # Terminate will nullptr
+        end.join("") << "\x0", # Terminate with nullptr
          true]
       end
     end
