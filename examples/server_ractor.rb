@@ -23,14 +23,17 @@ pipe = Ractor.new do
   end
 end
 
+# Create socket outside of Ractor context
+server_socket = UDPSocket.new :INET6
+server_socket.bind(LISTEN_ADDR, LISTEN_PORT)
+
 CPU_COUNT = Etc.nprocessors
 workers = CPU_COUNT.times.map do
-  Ractor.new(pipe) do |pipe|
+  Ractor.new(pipe, server_socket) do |pipe, server_socket|
     loop do
-      s = pipe.take
+      message, client = pipe.take
       puts "taken from pipe by #{Ractor.current}"
 
-      server_socket, message, client = s
       msg = DNSMessage::Message.parse(message)
 
       # Extract client information given as array and log connection
@@ -64,13 +67,10 @@ workers = CPU_COUNT.times.map do
   end
 end
 
-listener = Ractor.new(pipe) do |pipe|
-  server_socket = UDPSocket.new :INET6
-  server_socket.bind(LISTEN_ADDR, LISTEN_PORT)
+listener = Ractor.new(pipe, server_socket) do |pipe, server_socket|
   loop do
     msg, client = server_socket.recvfrom(MSG_LENGTH)
-    socket = server_socket.dup
-    pipe.send([socket, msg, client])
+    pipe.send([msg, client])
   end
 end
 
